@@ -1,0 +1,28 @@
+# terraform.tfvars.example
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is gitignored — never commit it.
+
+# Private LAN IP of the k3s server (control-plane) node
+server_ip = "192.168.1.10"
+
+# Private LAN IP of the k3s agent (worker) node
+agent_ip = "192.168.1.11"
+
+# SSH user on both nodes (must have sudo rights)
+ssh_user = "ubuntu"
+
+# Absolute path to your SSH private key on the Terraform host
+ssh_private_key_path = "~/.ssh/id_rsa"
+
+# Shared secret for k3s cluster join — use a long random string
+# Generate one with: openssl rand -hex 32
+k3s_token = "changeme-replace-with-openssl-rand-hex-32-output"
+
+# Internal hostname for the Rancher UI
+# Add this to /etc/hosts on any machine you want to access Rancher from:
+#   192.168.1.10  rancher.local
+rancher_hostname = "rancher.local"
+
+# Pin chart versions for reproducible deploys
+rancher_chart_version      = "2.8.4"
+cert_manager_chart_version = "v1.14.4"
