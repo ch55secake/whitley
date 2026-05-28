@@ -13,8 +13,13 @@ variable "ssh_user" {
   type        = string
 }
 
-variable "ssh_private_key_path" {
-  description = "Absolute path to the SSH private key file on the Terraform host."
+variable "server_ssh_private_key_path" {
+  description = "Absolute path to the SSH private key file used to connect to the server (control-plane) node."
+  type        = string
+}
+
+variable "agent_ssh_private_key_path" {
+  description = "Absolute path to the SSH private key file used to connect to the agent (worker) node."
   type        = string
 }
 

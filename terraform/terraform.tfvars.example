@@ -11,8 +11,11 @@ agent_ip = "192.168.1.11"
 # SSH user on both nodes (must have sudo rights)
 ssh_user = "ubuntu"
 
-# Absolute path to your SSH private key on the Terraform host
-ssh_private_key_path = "~/.ssh/id_rsa"
+# Absolute path to the SSH private key used to connect to the server (control-plane) node
+server_ssh_private_key_path = "~/.ssh/id_rsa_server"
+
+# Absolute path to the SSH private key used to connect to the agent (worker) node
+agent_ssh_private_key_path = "~/.ssh/id_rsa_agent"
 
 # Shared secret for k3s cluster join — use a long random string
 # Generate one with: openssl rand -hex 32
