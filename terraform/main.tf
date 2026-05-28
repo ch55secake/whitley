@@ -61,11 +61,12 @@ locals {
 module "k3s" {
   source = "./modules/k3s"
 
-  server_ip            = var.server_ip
-  agent_ip             = var.agent_ip
-  ssh_user             = var.ssh_user
-  ssh_private_key_path = var.ssh_private_key_path
-  k3s_token            = var.k3s_token
+  server_ip                   = var.server_ip
+  agent_ip                    = var.agent_ip
+  ssh_user                    = var.ssh_user
+  server_ssh_private_key_path = var.server_ssh_private_key_path
+  agent_ssh_private_key_path  = var.agent_ssh_private_key_path
+  k3s_token                   = var.k3s_token
   kubeconfig_local_path = local.kubeconfig_path
 }
 

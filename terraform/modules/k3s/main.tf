@@ -25,7 +25,7 @@ resource "null_resource" "k3s_server" {
     type        = "ssh"
     host        = var.server_ip
     user        = var.ssh_user
-    private_key = file(var.ssh_private_key_path)
+    private_key = file(var.server_ssh_private_key_path)
     timeout     = "5m"
   }
 
@@ -60,7 +60,7 @@ resource "null_resource" "k3s_agent" {
     type        = "ssh"
     host        = var.agent_ip
     user        = var.ssh_user
-    private_key = file(var.ssh_private_key_path)
+    private_key = file(var.agent_ssh_private_key_path)
     timeout     = "5m"
   }
 
@@ -93,7 +93,7 @@ resource "null_resource" "fetch_kubeconfig" {
       scp \
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null \
-        -i ${var.ssh_private_key_path} \
+        -i ${var.server_ssh_private_key_path} \
         ${var.ssh_user}@${var.server_ip}:/etc/rancher/k3s/k3s.yaml \
         ${var.kubeconfig_local_path}
 
