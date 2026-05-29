@@ -29,12 +29,6 @@ variable "k3s_token" {
   sensitive   = true
 }
 
-variable "k3s_version" {
-  description = "k3s release version to download and install (e.g. v1.35.5+k3s1)."
-  type        = string
-  default     = "v1.35.5+k3s1"
-}
-
 variable "kubeconfig_local_path" {
   description = "Local path where the kubeconfig will be written after cluster is up."
   type        = string

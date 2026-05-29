@@ -13,36 +13,9 @@ terraform {
 }
 
 # ---------------------------------------------------------------------------
-# Download k3s binary + install script onto the local machine once.
-# Both cluster nodes are LAN-only with no internet access, so files are
-# fetched here and copied to the nodes via SCP rather than pulled remotely.
-# ---------------------------------------------------------------------------
-resource "null_resource" "k3s_download" {
-  triggers = {
-    k3s_version = var.k3s_version
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      K3S_VERSION="${var.k3s_version}"
-      K3S_VERSION_ENCODED=$(echo "$${K3S_VERSION}" | sed 's/+/%2B/g')
-      echo "[k3s-download] Fetching k3s ${var.k3s_version} ..."
-      curl -sfL "https://github.com/k3s-io/k3s/releases/download/$${K3S_VERSION_ENCODED}/k3s" \
-        -o /tmp/k3s-binary
-      chmod +x /tmp/k3s-binary
-      curl -sfL https://get.k3s.io -o /tmp/k3s-install.sh
-      chmod +x /tmp/k3s-install.sh
-      echo "[k3s-download] Done."
-    EOT
-  }
-}
-
-# ---------------------------------------------------------------------------
 # Server node — install k3s control-plane
 # ---------------------------------------------------------------------------
 resource "null_resource" "k3s_server" {
-  depends_on = [null_resource.k3s_download]
-
   triggers = {
     server_ip            = var.server_ip
     k3s_token            = var.k3s_token
@@ -58,17 +31,6 @@ resource "null_resource" "k3s_server" {
     timeout     = "5m"
   }
 
-  # Copy the pre-downloaded k3s binary and install script to the server
-  provisioner "file" {
-    source      = "/tmp/k3s-binary"
-    destination = "/usr/local/bin/k3s"
-  }
-
-  provisioner "file" {
-    source      = "/tmp/k3s-install.sh"
-    destination = "/tmp/k3s-install.sh"
-  }
-
   # Upload the install script
   provisioner "file" {
     source      = "${path.module}/../../../scripts/install-k3s-server.sh"
@@ -78,7 +40,7 @@ resource "null_resource" "k3s_server" {
   # Execute the install script with required env vars
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /usr/local/bin/k3s /tmp/k3s-install.sh /tmp/install-k3s-server.sh",
+      "chmod +x /tmp/install-k3s-server.sh",
       "SERVER_IP=${self.triggers.server_ip} K3S_TOKEN=${self.triggers.k3s_token} sudo -E /tmp/install-k3s-server.sh",
     ]
   }
@@ -115,23 +77,13 @@ resource "null_resource" "k3s_agent" {
   }
 
   provisioner "file" {
-    source      = "/tmp/k3s-binary"
-    destination = "/usr/local/bin/k3s"
-  }
-
-  provisioner "file" {
-    source      = "/tmp/k3s-install.sh"
-    destination = "/tmp/k3s-install.sh"
-  }
-
-  provisioner "file" {
     source      = "${path.module}/../../../scripts/install-k3s-agent.sh"
     destination = "/tmp/install-k3s-agent.sh"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /usr/local/bin/k3s /tmp/k3s-install.sh /tmp/install-k3s-agent.sh",
+      "chmod +x /tmp/install-k3s-agent.sh",
       "SERVER_IP=${self.triggers.server_ip} AGENT_IP=${self.triggers.agent_ip} K3S_TOKEN=${self.triggers.k3s_token} sudo -E /tmp/install-k3s-agent.sh",
     ]
   }

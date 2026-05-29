@@ -73,7 +73,6 @@ module "k3s" {
   server_ssh_private_key_path = var.server_ssh_private_key_path
   agent_ssh_private_key_path  = var.agent_ssh_private_key_path
   k3s_token                   = var.k3s_token
-  k3s_version                 = var.k3s_version
   kubeconfig_local_path       = local.kubeconfig_path
 }
 
