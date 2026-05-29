@@ -1,22 +1,17 @@
 TERRAFORM_DIR := terraform
 
-.PHONY: init stage1 stage2 apply destroy fmt validate
+.PHONY: init apply destroy fmt validate
 
 ## terraform init
 init:
 	terraform -chdir=$(TERRAFORM_DIR) init
 
-## Stage 1 — bootstrap k3s nodes and fetch kubeconfig
-## Must complete before stage2; writes kubeconfig.yaml to terraform/
-stage1:
-	terraform -chdir=$(TERRAFORM_DIR) apply -target=module.k3s
-
-## Stage 2 — deploy cert-manager + Rancher (requires kubeconfig from stage1)
-stage2:
-	terraform -chdir=$(TERRAFORM_DIR) apply
-
-## Full apply (only safe after kubeconfig already exists from a prior stage1)
+## Full apply — bootstraps k3s, fetches kubeconfig, then deploys Rancher.
+## Internally runs two Terraform applies: the first installs k3s and writes
+## the kubeconfig to disk; the second deploys cert-manager and Rancher once
+## the kubeconfig exists for the helm/kubernetes providers to consume.
 apply:
+	terraform -chdir=$(TERRAFORM_DIR) apply -target=module.k3s
 	terraform -chdir=$(TERRAFORM_DIR) apply
 
 ## Tear down all resources.
