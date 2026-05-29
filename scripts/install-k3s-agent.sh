@@ -21,7 +21,6 @@ export K3S_TOKEN="${K3S_TOKEN}"
 
 curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="\
   agent \
-  --node-ip ${AGENT_IP} \
-  --flannel-iface eth0" sh -
+  --node-ip ${AGENT_IP}" sh -
 
 echo "[k3s-agent] Agent installation complete."

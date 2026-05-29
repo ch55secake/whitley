@@ -27,7 +27,6 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="\
   --disable servicelb \
   --cluster-cidr 10.42.0.0/16 \
   --service-cidr 10.43.0.0/16 \
-  --flannel-iface eth0 \
   --write-kubeconfig-mode 0644" sh -
 
 echo "[k3s-server] Waiting for k3s to become ready ..."
