@@ -184,6 +184,10 @@ resource "null_resource" "cluster_issuer" {
     kubernetes_secret.ca_key_pair,
   ]
 
+  triggers = {
+    kubeconfig_path = var.kubeconfig_path
+  }
+
   provisioner "local-exec" {
     command = <<-EOT
       kubectl --kubeconfig=${var.kubeconfig_path} apply -f - <<EOF
@@ -196,6 +200,12 @@ resource "null_resource" "cluster_issuer" {
           secretName: ${kubernetes_secret.ca_key_pair.metadata[0].name}
       EOF
     EOT
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "kubectl --kubeconfig=${self.triggers.kubeconfig_path} delete clusterissuer private-ca-issuer --ignore-not-found || true"
+    on_failure = continue
   }
 }
 
