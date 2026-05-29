@@ -79,15 +79,7 @@ module "k3s" {
 # ---------------------------------------------------------------------------
 # Module: rancher
 # Deploys cert-manager and Rancher via Helm onto the k3s cluster.
-# Must run after k3s is up and kubeconfig is available.
-#
-# IMPORTANT: apply must be split into two stages:
-#   Stage 1 — bootstrap k3s and fetch kubeconfig:
-#     terraform apply -target=module.k3s
-#   Stage 2 — deploy Rancher (kubeconfig now exists on disk):
-#     terraform apply
-#
-# See the Makefile in the repo root for convenience targets.
+# Depends on module.k3s having written the kubeconfig to disk first.
 # ---------------------------------------------------------------------------
 module "rancher" {
   source     = "./modules/rancher"
