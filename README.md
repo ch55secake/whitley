@@ -86,16 +86,16 @@ helm version
 
 Terraform connects to both nodes over SSH using key-based authentication. Ensure:
 
-- You have a private key with access to the server node (e.g. `~/.ssh/pi`)
-- You have a private key with access to the agent node (e.g. `~/.ssh/mini_pc`)
+- You have a private key with access to the server node
+- You have a private key with access to the agent node
 - Both nodes accept root login via those keys
 - Both nodes are reachable from your workstation on port 22
 
 Test connectivity before applying:
 
 ```bash
-ssh -i ~/.ssh/pi root@<server_ip> "echo ok"
-ssh -i ~/.ssh/mini_pc root@<agent_ip> "echo ok"
+ssh -i <server_key> root@<server_ip> "echo ok"
+ssh -i <agent_key> root@<agent_ip> "echo ok"
 ```
 
 ### Node requirements
