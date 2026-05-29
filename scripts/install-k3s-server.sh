@@ -23,8 +23,6 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="\
   --advertise-address ${SERVER_IP} \
   --node-ip ${SERVER_IP} \
   --tls-san ${SERVER_IP} \
-  --disable traefik \
-  --disable servicelb \
   --cluster-cidr 10.42.0.0/16 \
   --service-cidr 10.43.0.0/16 \
   --write-kubeconfig-mode 0644" sh -
