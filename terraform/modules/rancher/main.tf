@@ -107,6 +107,24 @@ resource "kubernetes_namespace" "cattle_system" {
 }
 
 # ---------------------------------------------------------------------------
+# tls-ca secret — required by Rancher when privateCA=true.
+# Rancher mounts this secret to trust the private CA for internal API calls.
+# Must be named "tls-ca" in cattle-system with key "cacerts".
+# ---------------------------------------------------------------------------
+resource "kubernetes_secret" "tls_ca" {
+  depends_on = [kubernetes_namespace.cattle_system]
+
+  metadata {
+    name      = "tls-ca"
+    namespace = kubernetes_namespace.cattle_system.metadata[0].name
+  }
+
+  data = {
+    "cacerts" = tls_self_signed_cert.ca.cert_pem
+  }
+}
+
+# ---------------------------------------------------------------------------
 # Wait for cert-manager CRDs to be fully established in the API server.
 # helm_release wait=true only confirms pods are Running; it does not guarantee
 # the CRDs (ClusterIssuer, Certificate, etc.) are registered and queryable.
@@ -188,6 +206,7 @@ resource "helm_release" "rancher" {
   depends_on = [
     kubernetes_namespace.cattle_system,
     null_resource.cluster_issuer,
+    kubernetes_secret.tls_ca,
   ]
 
   name       = "rancher"
