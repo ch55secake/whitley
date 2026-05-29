@@ -22,9 +22,11 @@ destroy:
 	terraform -chdir=$(TERRAFORM_DIR) destroy
 	rm -f $(TERRAFORM_DIR)/kubeconfig.yaml
 
-## Port-forward Rancher UI to https://localhost:8443
+## Open Rancher UI at https://rancher.local
+## Requires "<server_ip> rancher.local" in /etc/hosts.
 ui:
-	kubectl port-forward -n cattle-system svc/rancher 8443:443 --kubeconfig $(TERRAFORM_DIR)/kubeconfig.yaml
+	@echo "Opening https://rancher.local ..."
+	xdg-open https://rancher.local
 
 fmt:
 	terraform -chdir=$(TERRAFORM_DIR) fmt -recursive

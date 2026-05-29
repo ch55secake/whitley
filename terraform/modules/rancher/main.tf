@@ -5,8 +5,7 @@
 # from that CA via a ClusterIssuer.
 #
 # Access Rancher after apply:
-#   kubectl port-forward -n cattle-system svc/rancher 8443:443
-#   Browse: https://rancher.local:8443  (add to /etc/hosts)
+#   Browse: https://rancher.local  (add "<server_ip> rancher.local" to /etc/hosts)
 
 terraform {
   required_providers {
@@ -273,13 +272,6 @@ resource "helm_release" "rancher" {
   set {
     name  = "privateCA"
     value = "true"
-  }
-
-  # ClusterIP — no LoadBalancer, no NodePort, no public exposure.
-  # Access via: kubectl port-forward -n cattle-system svc/rancher 8443:443
-  set {
-    name  = "service.type"
-    value = "ClusterIP"
   }
 
   # Required on k3s 1.25+ (PSP removed)
