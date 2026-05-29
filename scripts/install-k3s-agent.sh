@@ -19,8 +19,8 @@ echo "[k3s-agent] Joining cluster at https://${SERVER_IP}:6443 ..."
 export K3S_URL="https://${SERVER_IP}:6443"
 export K3S_TOKEN="${K3S_TOKEN}"
 
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="\
+INSTALL_K3S_SKIP_DOWNLOAD=true INSTALL_K3S_EXEC="\
   agent \
-  --node-ip ${AGENT_IP}" sh -
+  --node-ip ${AGENT_IP}" bash /tmp/k3s-install.sh
 
 echo "[k3s-agent] Agent installation complete."

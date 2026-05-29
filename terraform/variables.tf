@@ -29,6 +29,12 @@ variable "k3s_token" {
   sensitive   = true
 }
 
+variable "k3s_version" {
+  description = "k3s release version to install (e.g. v1.35.5+k3s1). Pin this for reproducibility."
+  type        = string
+  default     = "v1.35.5+k3s1"
+}
+
 variable "rancher_hostname" {
   description = "Internal hostname for the Rancher UI. Add this to /etc/hosts pointing at server_ip."
   type        = string
