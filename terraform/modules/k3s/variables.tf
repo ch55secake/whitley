@@ -32,5 +32,5 @@ variable "k3s_token" {
 variable "kubeconfig_local_path" {
   description = "Local path where the kubeconfig will be written after cluster is up."
   type        = string
-  default     = "${path.root}/kubeconfig.yaml"
+  default     = "kubeconfig.yaml"
 }
