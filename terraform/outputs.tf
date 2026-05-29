@@ -1,5 +1,5 @@
 output "rancher_hostname" {
-  description = "Internal Rancher hostname. Add '${module.k3s.server_ip} ${module.rancher.rancher_hostname}' to /etc/hosts."
+  description = "Internal Rancher hostname. Add '<server_ip> <rancher_hostname>' to /etc/hosts (see server_ip and rancher_hostname outputs)."
   value       = module.rancher.rancher_hostname
 }
 
