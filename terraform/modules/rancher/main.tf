@@ -109,7 +109,7 @@ resource "kubernetes_namespace" "cattle_system" {
 # ---------------------------------------------------------------------------
 # tls-ca secret — required by Rancher when privateCA=true.
 # Rancher mounts this secret to trust the private CA for internal API calls.
-# Must be named "tls-ca" in cattle-system with key "cacerts".
+# Must be named "tls-ca" in cattle-system with key "cacerts.pem".
 # ---------------------------------------------------------------------------
 resource "kubernetes_secret" "tls_ca" {
   depends_on = [kubernetes_namespace.cattle_system]
@@ -120,7 +120,7 @@ resource "kubernetes_secret" "tls_ca" {
   }
 
   data = {
-    "cacerts" = tls_self_signed_cert.ca.cert_pem
+    "cacerts.pem" = tls_self_signed_cert.ca.cert_pem
   }
 }
 
