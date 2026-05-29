@@ -42,6 +42,14 @@ resource "null_resource" "k3s_server" {
       "SERVER_IP=${var.server_ip} K3S_TOKEN=${var.k3s_token} sudo -E /tmp/install-k3s-server.sh",
     ]
   }
+
+  provisioner "remote-exec" {
+    when = destroy
+    inline = [
+      "sudo /usr/local/bin/k3s-uninstall.sh || echo 'k3s-uninstall.sh not found, may already be removed'",
+    ]
+    on_failure = continue
+  }
 }
 
 # ---------------------------------------------------------------------------
@@ -74,6 +82,14 @@ resource "null_resource" "k3s_agent" {
       "chmod +x /tmp/install-k3s-agent.sh",
       "SERVER_IP=${var.server_ip} AGENT_IP=${var.agent_ip} K3S_TOKEN=${var.k3s_token} sudo -E /tmp/install-k3s-agent.sh",
     ]
+  }
+
+  provisioner "remote-exec" {
+    when = destroy
+    inline = [
+      "sudo /usr/local/bin/k3s-agent-uninstall.sh || echo 'k3s-agent-uninstall.sh not found, may already be removed'",
+    ]
+    on_failure = continue
   }
 }
 

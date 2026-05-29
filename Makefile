@@ -19,8 +19,13 @@ stage2:
 apply:
 	terraform -chdir=$(TERRAFORM_DIR) apply
 
+## Tear down all resources.
+## Runs destroy provisioners on k3s nodes (uninstalls k3s) and removes all
+## Helm releases and Kubernetes resources managed by Terraform.
+## Note: deletes terraform/kubeconfig.yaml after destroy completes.
 destroy:
 	terraform -chdir=$(TERRAFORM_DIR) destroy
+	rm -f $(TERRAFORM_DIR)/kubeconfig.yaml
 
 fmt:
 	terraform -chdir=$(TERRAFORM_DIR) fmt -recursive
