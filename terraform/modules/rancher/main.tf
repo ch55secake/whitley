@@ -156,25 +156,28 @@ resource "kubernetes_secret" "ca_key_pair" {
 }
 
 # ---------------------------------------------------------------------------
-# ClusterIssuer — uses the private CA secret above
+# ClusterIssuer — uses the private CA secret above.
+# Applied via kubectl local-exec to avoid kubernetes_manifest plan-time CRD
+# validation, which fails when the CRD does not yet exist in the API server.
 # ---------------------------------------------------------------------------
-resource "kubernetes_manifest" "cluster_issuer" {
+resource "null_resource" "cluster_issuer" {
   depends_on = [
     null_resource.wait_for_cert_manager_crds,
     kubernetes_secret.ca_key_pair,
   ]
 
-  manifest = {
-    apiVersion = "cert-manager.io/v1"
-    kind       = "ClusterIssuer"
-    metadata = {
-      name = "private-ca-issuer"
-    }
-    spec = {
-      ca = {
-        secretName = kubernetes_secret.ca_key_pair.metadata[0].name
-      }
-    }
+  provisioner "local-exec" {
+    command = <<-EOT
+      kubectl --kubeconfig=${var.kubeconfig_path} apply -f - <<EOF
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: private-ca-issuer
+      spec:
+        ca:
+          secretName: ${kubernetes_secret.ca_key_pair.metadata[0].name}
+      EOF
+    EOT
   }
 }
 
@@ -184,7 +187,7 @@ resource "kubernetes_manifest" "cluster_issuer" {
 resource "helm_release" "rancher" {
   depends_on = [
     kubernetes_namespace.cattle_system,
-    kubernetes_manifest.cluster_issuer,
+    null_resource.cluster_issuer,
   ]
 
   name       = "rancher"
