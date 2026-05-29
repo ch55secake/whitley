@@ -107,13 +107,39 @@ resource "kubernetes_namespace" "cattle_system" {
 }
 
 # ---------------------------------------------------------------------------
+# Wait for cert-manager CRDs to be fully established in the API server.
+# helm_release wait=true only confirms pods are Running; it does not guarantee
+# the CRDs (ClusterIssuer, Certificate, etc.) are registered and queryable.
+# ---------------------------------------------------------------------------
+resource "null_resource" "wait_for_cert_manager_crds" {
+  depends_on = [helm_release.cert_manager]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Waiting for cert-manager CRDs to be established..."
+      for i in $(seq 1 30); do
+        kubectl --kubeconfig=${var.kubeconfig_path} \
+          get crd clusterissuers.cert-manager.io >/dev/null 2>&1 && \
+        kubectl --kubeconfig=${var.kubeconfig_path} \
+          wait --for=condition=Established \
+          crd/clusterissuers.cert-manager.io --timeout=60s && \
+        echo "CRDs ready." && exit 0
+        echo "Attempt $i: CRDs not ready yet, retrying in 5s..."
+        sleep 5
+      done
+      echo "Timed out waiting for cert-manager CRDs." && exit 1
+    EOT
+  }
+}
+
+# ---------------------------------------------------------------------------
 # Kubernetes Secret — private CA cert + key for cert-manager
 # Must live in cert-manager namespace for the ClusterIssuer to reference it.
 # ---------------------------------------------------------------------------
 resource "kubernetes_secret" "ca_key_pair" {
   depends_on = [
     kubernetes_namespace.cert_manager,
-    helm_release.cert_manager,
+    null_resource.wait_for_cert_manager_crds,
   ]
 
   metadata {
@@ -134,7 +160,7 @@ resource "kubernetes_secret" "ca_key_pair" {
 # ---------------------------------------------------------------------------
 resource "kubernetes_manifest" "cluster_issuer" {
   depends_on = [
-    helm_release.cert_manager,
+    null_resource.wait_for_cert_manager_crds,
     kubernetes_secret.ca_key_pair,
   ]
 
