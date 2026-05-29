@@ -42,16 +42,22 @@ terraform {
 # ---------------------------------------------------------------------------
 provider "helm" {
   kubernetes {
-    config_path = local.kubeconfig_path
+    config_path = local.kubeconfig_path_or_null
   }
 }
 
 provider "kubernetes" {
-  config_path = local.kubeconfig_path
+  config_path = local.kubeconfig_path_or_null
 }
 
 locals {
   kubeconfig_path = "${path.module}/kubeconfig.yaml"
+
+  # fileexists() is evaluated at plan time. When the kubeconfig has not yet
+  # been fetched (stage-1 apply) this resolves to null, which causes the
+  # helm and kubernetes providers to skip client initialisation gracefully.
+  # After stage-1 completes the file exists and stage-2 picks it up.
+  kubeconfig_path_or_null = fileexists("${path.module}/kubeconfig.yaml") ? local.kubeconfig_path : null
 }
 
 # ---------------------------------------------------------------------------
@@ -67,13 +73,21 @@ module "k3s" {
   server_ssh_private_key_path = var.server_ssh_private_key_path
   agent_ssh_private_key_path  = var.agent_ssh_private_key_path
   k3s_token                   = var.k3s_token
-  kubeconfig_local_path = local.kubeconfig_path
+  kubeconfig_local_path       = local.kubeconfig_path
 }
 
 # ---------------------------------------------------------------------------
 # Module: rancher
 # Deploys cert-manager and Rancher via Helm onto the k3s cluster.
 # Must run after k3s is up and kubeconfig is available.
+#
+# IMPORTANT: apply must be split into two stages:
+#   Stage 1 — bootstrap k3s and fetch kubeconfig:
+#     terraform apply -target=module.k3s
+#   Stage 2 — deploy Rancher (kubeconfig now exists on disk):
+#     terraform apply
+#
+# See the Makefile in the repo root for convenience targets.
 # ---------------------------------------------------------------------------
 module "rancher" {
   source     = "./modules/rancher"
