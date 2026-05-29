@@ -38,11 +38,11 @@ variable "rancher_hostname" {
 variable "rancher_chart_version" {
   description = "Rancher Helm chart version."
   type        = string
-  default     = "2.8.4"
+  default     = "2.14.2"
 }
 
 variable "cert_manager_chart_version" {
   description = "cert-manager Helm chart version."
   type        = string
-  default     = "v1.14.4"
+  default     = "v1.17.2"
 }
