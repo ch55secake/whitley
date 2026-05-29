@@ -17,15 +17,17 @@ terraform {
 # ---------------------------------------------------------------------------
 resource "null_resource" "k3s_server" {
   triggers = {
-    server_ip = var.server_ip
-    k3s_token = var.k3s_token
+    server_ip            = var.server_ip
+    k3s_token            = var.k3s_token
+    ssh_user             = var.ssh_user
+    ssh_private_key_path = var.server_ssh_private_key_path
   }
 
   connection {
     type        = "ssh"
-    host        = var.server_ip
-    user        = var.ssh_user
-    private_key = file(var.server_ssh_private_key_path)
+    host        = self.triggers.server_ip
+    user        = self.triggers.ssh_user
+    private_key = file(self.triggers.ssh_private_key_path)
     timeout     = "5m"
   }
 
@@ -39,7 +41,7 @@ resource "null_resource" "k3s_server" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/install-k3s-server.sh",
-      "SERVER_IP=${var.server_ip} K3S_TOKEN=${var.k3s_token} sudo -E /tmp/install-k3s-server.sh",
+      "SERVER_IP=${self.triggers.server_ip} K3S_TOKEN=${self.triggers.k3s_token} sudo -E /tmp/install-k3s-server.sh",
     ]
   }
 
@@ -59,16 +61,18 @@ resource "null_resource" "k3s_agent" {
   depends_on = [null_resource.k3s_server]
 
   triggers = {
-    agent_ip  = var.agent_ip
-    server_ip = var.server_ip
-    k3s_token = var.k3s_token
+    agent_ip             = var.agent_ip
+    server_ip            = var.server_ip
+    k3s_token            = var.k3s_token
+    ssh_user             = var.ssh_user
+    ssh_private_key_path = var.agent_ssh_private_key_path
   }
 
   connection {
     type        = "ssh"
-    host        = var.agent_ip
-    user        = var.ssh_user
-    private_key = file(var.agent_ssh_private_key_path)
+    host        = self.triggers.agent_ip
+    user        = self.triggers.ssh_user
+    private_key = file(self.triggers.ssh_private_key_path)
     timeout     = "5m"
   }
 
@@ -80,7 +84,7 @@ resource "null_resource" "k3s_agent" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/install-k3s-agent.sh",
-      "SERVER_IP=${var.server_ip} AGENT_IP=${var.agent_ip} K3S_TOKEN=${var.k3s_token} sudo -E /tmp/install-k3s-agent.sh",
+      "SERVER_IP=${self.triggers.server_ip} AGENT_IP=${self.triggers.agent_ip} K3S_TOKEN=${self.triggers.k3s_token} sudo -E /tmp/install-k3s-agent.sh",
     ]
   }
 
