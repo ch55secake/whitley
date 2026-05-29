@@ -210,6 +210,31 @@ resource "null_resource" "cluster_issuer" {
 }
 
 # ---------------------------------------------------------------------------
+# Stale API service cleanup — runs on destroy before namespace deletion.
+# Rancher registers ext.cattle.io/v1 with the aggregation layer. After the
+# Helm release is removed the APIService object becomes stale, causing
+# namespace deletion to fail with DiscoveryFailed. This resource removes
+# those stale APIServices so the namespaces can be cleanly deleted.
+# ---------------------------------------------------------------------------
+resource "null_resource" "rancher_api_cleanup" {
+  triggers = {
+    kubeconfig_path = var.kubeconfig_path
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      kubectl --kubeconfig=${self.triggers.kubeconfig_path} \
+        delete apiservice v1.ext.cattle.io --ignore-not-found || true
+      kubectl --kubeconfig=${self.triggers.kubeconfig_path} \
+        get apiservice -o name | grep cattle.io | \
+        xargs -r kubectl --kubeconfig=${self.triggers.kubeconfig_path} delete --ignore-not-found || true
+    EOT
+    on_failure = continue
+  }
+}
+
+# ---------------------------------------------------------------------------
 # Rancher Helm release
 # ---------------------------------------------------------------------------
 resource "helm_release" "rancher" {
@@ -217,6 +242,7 @@ resource "helm_release" "rancher" {
     kubernetes_namespace.cattle_system,
     null_resource.cluster_issuer,
     kubernetes_secret.tls_ca,
+    null_resource.rancher_api_cleanup,
   ]
 
   name       = "rancher"
