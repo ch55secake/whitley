@@ -31,11 +31,81 @@ whitley/
 
 ## Prerequisites
 
-- Terraform >= 1.6.0 on your workstation
-- SSH access to both nodes (key-based auth)
-- Both nodes running a supported Linux distribution (Ubuntu 22.04 recommended)
-- Both nodes have internet access to pull k3s and Helm charts during provisioning
-  (after provisioning, internet access is not required for cluster operation)
+The following tools must be installed on your workstation before running anything.
+
+### Terraform
+
+Version 1.6.0 or newer.
+
+```bash
+# macOS
+brew install terraform
+
+# Linux (via tfenv)
+git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bashrc
+tfenv install 1.6.0
+tfenv use 1.6.0
+
+# Verify
+terraform -version
+```
+
+### kubectl
+
+Required for `make ui` and for any manual cluster inspection.
+
+```bash
+# macOS
+brew install kubectl
+
+# Linux
+curl -LO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+
+# Verify
+kubectl version --client
+```
+
+### Helm
+
+Required for Terraform's helm provider to initialise.
+
+```bash
+# macOS
+brew install helm
+
+# Linux
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Verify
+helm version
+```
+
+### SSH key access to both nodes
+
+Terraform connects to both nodes over SSH using key-based authentication. Ensure:
+
+- You have a private key with access to the server node (e.g. `~/.ssh/pi`)
+- You have a private key with access to the agent node (e.g. `~/.ssh/mini_pc`)
+- Both nodes accept root login via those keys
+- Both nodes are reachable from your workstation on port 22
+
+Test connectivity before applying:
+
+```bash
+ssh -i ~/.ssh/pi root@<server_ip> "echo ok"
+ssh -i ~/.ssh/mini_pc root@<agent_ip> "echo ok"
+```
+
+### Node requirements
+
+Both nodes must have:
+
+- A supported 64-bit Linux distribution (Ubuntu 22.04+ or Debian 12+ recommended)
+- Internet access during provisioning (to pull k3s and Helm charts)
+- Ports open between each other: `6443` (k3s API), `8472/UDP` (flannel VXLAN), `10250` (kubelet)
+- `curl` installed
 
 ## Quick Start
 
@@ -56,8 +126,8 @@ openssl rand -hex 32
 ### 2. Deploy
 
 ```bash
-terraform init
-terraform apply
+make init
+make apply
 ```
 
 Terraform will:
@@ -69,28 +139,23 @@ Terraform will:
 
 ### 3. Access Rancher
 
-Add to `/etc/hosts` on your workstation (replace with your actual server IP):
-
-```
-192.168.1.10  rancher.local
-```
-
 Open a port-forward:
 
 ```bash
-export KUBECONFIG=terraform/kubeconfig.yaml
-kubectl port-forward -n cattle-system svc/rancher 8443:443
+make ui
 ```
 
-Browse to `https://rancher.local:8443`.
+Browse to `https://localhost:8443`. You will get a certificate warning due to the private CA — click through it.
 
-To avoid the TLS warning, export and trust the private CA:
+Get the initial admin password:
 
 ```bash
-cd terraform
-terraform output -raw ca_cert_pem > whitley-ca.crt
-# Import whitley-ca.crt into your OS/browser trust store
+kubectl get secret --namespace cattle-system bootstrap-secret \
+  -o go-template='{{ .data.bootstrapPassword | base64decode }}' \
+  --kubeconfig terraform/kubeconfig.yaml
 ```
+
+When prompted for a Server URL, use `https://<server_ip>` (your `server_ip` from `terraform.tfvars`) so all cluster nodes can reach Rancher.
 
 ## Security Checklist
 
